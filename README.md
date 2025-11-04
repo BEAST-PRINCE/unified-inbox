@@ -1,26 +1,26 @@
 
 # Unified Inbox for Multi-Channel Customer Outreach
 
-[cite\_start]This is a full-stack unified inbox application built for the Attack Capital associate position assignment[cite: 1]. The platform aggregates customer messages from **Twilio (SMS & WhatsApp)** into a single, real-time dashboard.
+ This is a full-stack unified inbox application built for the Attack Capital associate position assignment[cite: 1]. The platform aggregates customer messages from **Twilio (SMS & WhatsApp)** into a single, real-time dashboard.
 
 It's built with a modern, type-safe stack using **Next.js 14 (App Router)** for the frontend and API, **Postgres with Prisma** for the database, and **Better Auth** for secure, cookie-based authentication.
 
 ## 🎥 Video Walkthrough
 
-[cite\_start]*(**Required Deliverable:** Record your 3-5 minute video and paste the link here)* [cite: 65]
+ *(**Required Deliverable:** Record your 3-5 minute video and paste the link here)* [cite: 65]
 
 [Link to your Loom or unlisted YouTube video]
 
 ## 💻 Tech Stack
 
-  * [cite\_start]**Framework:** Next.js 14 (App Router) [cite: 7]
+  *  **Framework:** Next.js 14 (App Router) [cite: 7]
   * **Language:** TypeScript
   * **Database:** Postgres
-  * [cite\_start]**ORM:** Prisma [cite: 8]
-  * [cite\_start]**Authentication:** Better Auth [cite: 9]
-  * [cite\_start]**Primary Integration:** Twilio (SMS & WhatsApp) [cite: 10]
-  * [cite\_start]**Data Fetching:** React Query (`@tanstack/react-query`) [cite: 42]
-  * [cite\_start]**Styling:** Inline CSS (for this demo) / Tailwind CSS [cite: 41]
+  *  **ORM:** Prisma [cite: 8]
+  *  **Authentication:** Better Auth [cite: 9]
+  *  **Primary Integration:** Twilio (SMS & WhatsApp) [cite: 10]
+  *  **Data Fetching:** React Query (`@tanstack/react-query`) [cite: 42]
+  *  **Styling:** Inline CSS (for this demo) / Tailwind CSS [cite: 41]
 
 ## ✨ Key Features
 
@@ -109,13 +109,13 @@ Twilio cannot send webhooks to `localhost`. You must use `ngrok` to expose your 
 
   * **Next.js 14 App Router:** Chosen as the full-stack framework to co-locate UI, API routes, and middleware in a single, type-safe project.
   * **Prisma ORM:** Used for its excellent TypeScript support, which makes database interactions robust and prevents common errors.
-  * [cite\_start]**Normalized `Message` Schema:** A key decision was to use a single, unified `Message` table for all communication channels[cite: 33]. A `channel` enum (`SMS`, `WHATSAPP`) and `direction` enum (`INBOUND`, `OUTBOUND`) allow the UI to be built from one data source.
-  * [cite\_start]**React Query for Data Fetching:** Chosen over simple `useEffect` to handle caching, loading states, and error retries professionally[cite: 42]. We use query invalidation (`invalidateQueries`) to create a real-time feel after sending a message.
+  *  **Normalized `Message` Schema:** A key decision was to use a single, unified `Message` table for all communication channels[cite: 33]. A `channel` enum (`SMS`, `WHATSAPP`) and `direction` enum (`INBOUND`, `OUTBOUND`) allow the UI to be built from one data source.
+  *  **React Query for Data Fetching:** Chosen over simple `useEffect` to handle caching, loading states, and error retries professionally[cite: 42]. We use query invalidation (`invalidateQueries`) to create a real-time feel after sending a message.
   * **Secure Webhooks:** The Twilio webhook uses `twilio.validateRequest` to verify the `X-Twilio-Signature` header, ensuring that all inbound requests are genuinely from Twilio and not a malicious actor.
 
 ## 📊 Database Schema (ERD)
 
-[cite\_start]This is the `prisma` schema, visualized using Mermaid[cite: 60].
+ This is the `prisma` schema, visualized using Mermaid[cite: 60].
 
 ```mermaid
 erDiagram
@@ -171,7 +171,7 @@ erDiagram
 
 ## 📈 Integration Comparison Table
 
-[cite\_start]This table compares the channels specified in the assignment[cite: 20, 64].
+ This table compares the channels specified in the assignment[cite: 20, 64].
 
 | Channel | Setup Complexity | Cost Model (Approx.) | Latency | Reliability |
 | :--- | :--- | :--- | :--- | :--- |
@@ -184,8 +184,8 @@ erDiagram
 
 ## ⏭️ Future Improvements
 
-  * [cite\_start]**Real-Time with WebSockets:** For a true real-time app, I would implement WebSockets (e.g., via Pusher, Ably, or Socket.io) to push inbound messages to the client instead of relying on manual refreshes[cite: 18].
-  * [cite\_start]**Optimistic UI:** When sending a message, the UI could be updated *before* the API call finishes, providing a faster, more "optimistic" user experience[cite: 42].
-  * [cite\_start]**Contact Profile:** Build the "Contact Profile" modal [cite: 36] to show contact history, add notes, and see all their metadata.
-  * [cite\_start]**Analytics Dashboard:** Implement the (optional) analytics dashboard [cite: 5, 40] to track response times, channel volume, etc.
-  * [cite\_start]**Full Channel Integration:** Add the optional Email, Twitter, and Facebook integrations[cite: 46, 47].
+  *  **Real-Time with WebSockets:** For a true real-time app, I would implement WebSockets (e.g., via Pusher, Ably, or Socket.io) to push inbound messages to the client instead of relying on manual refreshes[cite: 18].
+  *  **Optimistic UI:** When sending a message, the UI could be updated *before* the API call finishes, providing a faster, more "optimistic" user experience[cite: 42].
+  *  **Contact Profile:** Build the "Contact Profile" modal [cite: 36] to show contact history, add notes, and see all their metadata.
+  *  **Analytics Dashboard:** Implement the (optional) analytics dashboard [cite: 5, 40] to track response times, channel volume, etc.
+  *  **Full Channel Integration:** Add the optional Email, Twitter, and Facebook integrations[cite: 46, 47].

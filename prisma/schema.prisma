@@ -1,0 +1,278 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------
+// AUTHENTICATION MODELS
+// ------------------------------
+
+
+//model User {
+//  id        String   @id @default(cuid())
+//  email     String   @unique
+//  name      String?
+//  avatarUrl String?
+
+//  // Relations
+//  teamMemberships TeamMembership[]
+//  messages        Message[]        // Messages sent by this user
+//  notes           Note[]           // Notes written by this user
+
+//  createdAt DateTime @default(now())
+//  updatedAt DateTime @updatedAt
+//}
+
+
+
+
+
+// User model
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  name          String?
+  image         String?
+  avatarUrl     String?
+
+  // Relations
+  teamMemberships TeamMembership[]
+  messages        Message[]
+  notes           Note[]
+  accounts        Account[]
+  sessions        Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Account model
+model Account {
+  id                String   @id @default(cuid())
+  accountId         String
+  providerId        String
+  userId            String
+  accessToken       String?
+  refreshToken      String?
+  idToken           String?
+  expiresAt         DateTime?
+  password          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+// Session model
+model Session {
+  id           String   @id @default(cuid())
+  token String   @unique
+  userId       String
+  expiresAt    DateTime
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Verification model
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+}
+
+
+
+
+
+model Team {
+  id    String @id @default(cuid())
+  name  String
+
+  // Relations
+  members   TeamMembership[]
+  contacts  Contact[] // Team-owned contacts
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Join table for many-to-many User/Team relation
+// This stores the user's role *within* a specific team
+model TeamMembership {
+  id     String   @id @default(cuid())
+  
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  
+  team   Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId String
+
+  role   UserRole @default(VIEWER)
+
+  @@unique([userId, teamId]) // User can only be in a team once
+}
+
+enum UserRole {
+  VIEWER
+  EDITOR
+  ADMIN
+}
+
+// ------------------------------
+// CORE APPLICATION MODELS
+// ------------------------------
+
+// Unified contact model
+model Contact {
+  id        String   @id @default(cuid())
+  firstName String?
+  lastName  String?
+  
+  // Team association
+  team      Team     @relation(fields: [teamId], references: [id])
+  teamId    String
+
+  // Channel Identifiers
+  phone         String? @unique // For SMS & WhatsApp
+  email         String? @unique
+  twitterHandle String? @unique // For Twitter DMs
+  facebookId    String? @unique // For Facebook Messenger
+
+  // Relations
+  messages Message[] // Full communication history
+  notes    Note[]    // Internal notes history
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([teamId])
+}
+
+// Normalized, unified message table
+model Message {
+  id        String  @id @default(cuid())
+  content   String  // The text content of the message
+  
+  // Relations
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String
+
+  // Sender (if outbound, from our team)
+  // Nullable, as inbound messages don't have an internal user sender
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId    String? 
+
+  // Channel & Direction
+  channel   ChannelType
+  direction MessageDirection
+
+  // Status tracking for inbox UI and scheduling
+  status    MessageStatus @default(PENDING)
+  
+  // Scheduling
+  scheduledAt DateTime? // For "Auto-Text Scheduling"
+
+  // Timestamps for analytics
+  sentAt      DateTime? // When it was successfully sent
+  deliveredAt DateTime? // From Twilio webhook status update
+  readAt      DateTime? // From WhatsApp read receipt
+
+  // Media attachments (MMS, WhatsApp Images)
+  attachments String[] // Array of URLs
+
+  // Provider-specific ID for webhook correlation
+  twilioSid String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([contactId, createdAt]) // For contact history timeline
+  @@index([status, scheduledAt])  // For "scheduled" filter/worker
+}
+
+// Internal notes for team collaboration
+model Note {
+  id        String  @id @default(cuid())
+  content   String
+
+  // Relations
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String
+  
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String  // Author of the note
+
+  // Visibility toggle
+  isPrivate Boolean @default(false)
+  
+  // Threading support
+  parentId  String?
+  parent    Note?   @relation("NoteThreads", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies   Note[]  @relation("NoteThreads")
+  
+  // For @mentions
+  mentionedUserIds String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([contactId])
+}
+
+// ------------------------------
+// ENUMS
+// ------------------------------
+
+enum ChannelType {
+  SMS
+  WHATSAPP
+  EMAIL
+  TWITTER
+  FACEBOOK
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageStatus {
+  // Common
+  PENDING    // Queued by our system, not yet sent to provider
+  FAILED     // Provider failed to send
+  
+  // Outbound
+  SCHEDULED  // Set for a future time
+  SENT       // Sent to provider (e.g., Twilio)
+  DELIVERED  // Confirmed delivery by provider
+  
+  // Inbound
+  UNREAD     // New inbound message, not seen by team
+  READ       // Seen by a team member (or WhatsApp read receipt)
+}
